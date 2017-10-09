@@ -7,9 +7,9 @@ def my_crop(x,y):
     #crop center y 
     h,w = x.size(2),x.size(3)
     h1,w1 = y.size(2),y.size(3)
-    a = int(round((h1-h)/2))
-    b = int(round((w1-w)/2))
-    return y[:,:,a:a+h,b:b+w]
+    #a = int(round((h1-h)/2))
+    #b = int(round((w1-w)/2))
+    return y[:,:,:h,:w]
 
 
 
@@ -173,7 +173,6 @@ class DSSNet(nn.Module):
         h3 = torch.cat((h3,my_crop(h3,self.upsample8_dsn6(h6)), my_crop(h3,self.upsample4_dsn5(h5))),1) 
         h3 = self.conv4_dsn3(h3)
         score3 = my_crop(h,self.upsample4_in_dsn3(h3))
-
         h2 = self.relu1_dsn2(self.conv1_dsn2(h2))
         h2 = self.relu2_dsn2(self.conv2_dsn2(h2))
         h2 = self.conv3_dsn2(h2)
@@ -196,6 +195,7 @@ class DSSNet(nn.Module):
         out.append(score5)
         out.append(score6)
         out.append(score_fuse)
+        
         return out
     
 

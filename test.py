@@ -13,7 +13,7 @@ import pydensecrf.densecrf as dcrf
 import time
 import os
 os.environ["CUDA_DEVICE_ORDER"]="PCI_BUS_ID"
-os.environ["CUDA_VISIBLE_DEVICES"]="0"
+os.environ["CUDA_VISIBLE_DEVICES"]="2"
 thresholds=256
 E=1e-4
 EPSION=1e-8
@@ -73,7 +73,7 @@ def evaluate(model,dataset):
     time2=[]
     for iter_,(data,label) in enumerate(dataset):
         time_1 = time.time()
-        img = data
+        img = data.numpy()
         img = untransform(img)
         data = Variable(data).cuda()
         out = model(data)
@@ -132,7 +132,7 @@ def main():
     for i in range(1):
         ex = 10000
         print(ex)
-        model.load_state_dict(torch.load('converted2.pth'))
+        model.load_state_dict(torch.load('converted.pth'))
         model.cuda()
         root = '/home/wfz/Documents/code/saliency/MSRA10K_Imgs_GT' 
         testdata = MSRA10K(root=root,split='val',transform=True)

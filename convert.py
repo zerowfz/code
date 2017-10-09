@@ -45,8 +45,13 @@ net.blobs['data'].reshape(1,*img.shape)
 net.blobs['data'].data[...]=img
 net.forward()
 o = []
+o2=[]
+o1=[]
 def hook(module,input,output):
+
+    o2.append(module)
     o.append(input[0].data.numpy())
+    o1.append(output.data.numpy())
 def dist_(caffe_tensor,th_tensor):
     t = th_tensor[0]
     c = caffe_tensor[0]
@@ -55,7 +60,7 @@ def dist_(caffe_tensor,th_tensor):
         print ("c.shape",c.shape)
     d = np.linalg.norm(t-c)
     print("d",d)
-
+'''
 c.conv1_1.register_forward_hook(hook)
 c.relu1_1.register_forward_hook(hook)
 c.conv2_1.register_forward_hook(hook)
@@ -67,8 +72,23 @@ c.conv1_dsn5.register_forward_hook(hook)
 c.conv1_dsn4.register_forward_hook(hook)
 c.conv1_dsn3.register_forward_hook(hook)
 c.conv1_dsn2.register_forward_hook(hook)
+c.conv2_dsn2.register_forward_hook(hook)
 c.conv1_dsn1.register_forward_hook(hook)
+'''
+c.conv1_dsn6.register_forward_hook(hook)
+c.relu1_dsn6.register_forward_hook(hook)
+c.conv2_dsn6.register_forward_hook(hook)
+c.relu2_dsn6.register_forward_hook(hook)
+c.conv3_dsn6.register_forward_hook(hook)
+c.upsample32_in_dsn6.register_forward_hook(hook)
+
+#c.conv3_dsn2.register_forward_hook(hook)
+#c.conv4_dsn2.register_forward_hook(hook)
+#c.conv3_dsn3.register_forward_hook(hook)
+#c.conv4_dsn3.register_forward_hook(hook)
 out = c(Variable(torch.FloatTensor(img.copy()).unsqueeze(0)))
+
+'''
 dist_(net.blobs['data'].data,o[0])
 dist_(net.blobs['conv1_1'].data,o[1])
 dist_(net.blobs['pool1'].data,o[2])
@@ -76,15 +96,16 @@ dist_(net.blobs['pool2'].data,o[3])
 dist_(net.blobs['pool3'].data,o[4])
 dist_(net.blobs['pool4'].data,o[5])
 dist_(net.blobs['pool5a'].data,o[6])
-dist_(net.blobs['conv5_3'].data,o[7])
-dist_(net.blobs['conv4_3'].data,o[8])
-dist_(net.blobs['conv3_3'].data,o[9])
-dist_(net.blobs['conv2_2'].data,o[10])
-dist_(net.blobs['conv1_2'].data,o[11])
+#dist_(net.blobs['conv5_3'].data,o[7])  0.0034
+#dist_(net.blobs['conv4_3'].data,o[8])  0.0972
+#dist_(net.blobs['conv3_3'].data,o[9])  0.1736
+#dist_(net.blobs['conv2_2'].data,o[10])0.2278
+#dist_(net.blobs['conv1-dsn2'].data,o[11])  0.079
+#dist_(net.blobs['conv1_2'].data,o[12])  0.074
+'''
 
 
-
-#torch.save(c.state_dict(),'converted2.pth')
+torch.save(c.state_dict(),'converted.pth')
 
 
 

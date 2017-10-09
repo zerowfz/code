@@ -14,7 +14,7 @@ from test import evaluate
 from dataset import MSRA10K
 import os
 os.environ["CUDA_DEVICE_ORDER"]="PCI_BUS_ID"
-os.environ["CUDA_VISIBLE_DEVICES"]="0"
+os.environ["CUDA_VISIBLE_DEVICES"]="2"
 def get_parameter(model,bias=True,scale=False):
     #different params for weight and bias
     b=[
@@ -28,7 +28,7 @@ def get_parameter(model,bias=True,scale=False):
        model.conv4_dsn2,
        model.conv3_dsn1,
        model.conv4_dsn1,
-       #model.conv_fuse,
+       model.conv_fuse,
     ]
     if scale:
         for m in b:
@@ -50,11 +50,15 @@ def get_parameter(model,bias=True,scale=False):
 def criterion(predict,label):
     #predict:1*1*h*w,label:1*h*w
     predict = F.sigmoid(predict)
-    x = torch.log(torch.cat((1-predict,predict),1))
-    m = nn.NLLLoss2d()
+    x1 = torch.log(predict)[0]
+    x2 = torch.log(1-predict)[0]
+    loss = x1[label==1].sum()+x2[label==0].sum()
+    #x = torch.log(torch.cat((1-predict,predict),1))
+    #m = nn.NLLLoss2d()
     #label = label.unsqueeze(0)
     #loss=-predict[label==1].mean()
-    return m(x,label)
+    
+    return -loss
 
 rootpath = '/home/wfz/Documents/code/saliency/MSRA10K_Imgs_GT'
 trainset = MSRA10K(root=rootpath)
@@ -70,12 +74,12 @@ model.copy_from_vgg(vgg)
 model.cuda()
 model.float()
 #lr 'step' update
-lr_base = 1e-2
+lr_base = 1e-8
 gamma=0.1
 iter_size=10
 stepsize=7500
 #max_iter
-max_iter=20000
+max_iter=12000
 iter_=0
 optimizer = torch.optim.SGD([{'params':get_parameter(model,bias=False),'lr':lr_base},                         {'params':get_parameter(model,bias=True),'lr':2*lr_base,'weight_decay':0},
           {'params':get_parameter(model,bias=False,scale=True),'lr':0.1*lr_base},
@@ -129,7 +133,7 @@ for epoch in range(0,maxepoch):
         if iter_%2000==0:
             print('test:')
             #print(F.sigmoid(out[5]))
-            torch.save(model.state_dict(),f'result/test/9_26{lr_base}_{iter_}.pth')
+            torch.save(model.state_dict(),f'result/9_10{lr_base}_{iter_}.pth')
             #evaluate(model,testloader)
         if iter_>max_iter:
             break
