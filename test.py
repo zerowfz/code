@@ -132,7 +132,7 @@ def main():
     for i in range(1):
         ex = 10000
         print(ex)
-        model.load_state_dict(torch.load('converted.pth'))
+        model.load_state_dict(torch.load('./result/9_101e-08_12000.pth'))
         model.cuda()
         root = '/home/wfz/Documents/code/saliency/MSRA10K_Imgs_GT' 
         testdata = MSRA10K(root=root,split='val',transform=True)

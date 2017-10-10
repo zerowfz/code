@@ -49,16 +49,26 @@ def get_parameter(model,bias=True,scale=False):
 
 def criterion(predict,label):
     #predict:1*1*h*w,label:1*h*w
-    predict = F.sigmoid(predict)
-    x1 = torch.log(predict)[0]
-    x2 = torch.log(1-predict)[0]
-    loss = x1[label==1].sum()+x2[label==0].sum()
+    #predict = F.sigmoid(predict)
+    #x1 = torch.log(predict)[0]
+    #x2 = torch.log(1-predict)[0]
+    #loss = x1[label==1].sum()+x2[label==0].sum()
+    #grad_predict = predict.register_hook(lambda grad:grad)
+    predict = predict[0][0]
+    label = label[0].float()
+    tem = (predict>=0).float()
+    #grad_tem = tem.register_hook(lambda grad:grad)
+    #print(tem.requires_grad)
+    #print(predict.requires_grad)
+    loss =-(predict*(label-tem)-torch.log(1+torch.exp(predict-2*predict*tem))).sum()
+    #print(predict.grad)
+    assert ~np.isnan(loss.data.cpu().numpy()),'nan'
     #x = torch.log(torch.cat((1-predict,predict),1))
     #m = nn.NLLLoss2d()
     #label = label.unsqueeze(0)
     #loss=-predict[label==1].mean()
     
-    return -loss
+    return loss
 
 rootpath = '/home/wfz/Documents/code/saliency/MSRA10K_Imgs_GT'
 trainset = MSRA10K(root=rootpath)
@@ -72,14 +82,13 @@ vgg.load_state_dict(torch.load('vgg16_from_caffe.pth'))
 model.copy_from_vgg(vgg)
 #model.load_state_dict(torch.load('./result/pth/0.01_10000.pth'))
 model.cuda()
-model.float()
 #lr 'step' update
 lr_base = 1e-8
 gamma=0.1
 iter_size=10
-stepsize=7500
+stepsize=8000
 #max_iter
-max_iter=12000
+max_iter=20000
 iter_=0
 optimizer = torch.optim.SGD([{'params':get_parameter(model,bias=False),'lr':lr_base},                         {'params':get_parameter(model,bias=True),'lr':2*lr_base,'weight_decay':0},
           {'params':get_parameter(model,bias=False,scale=True),'lr':0.1*lr_base},
@@ -96,16 +105,21 @@ for epoch in range(0,maxepoch):
         data,label = Variable(data),Variable(label)
         data,label = data.cuda(),label.cuda()
         out = model(data)
+        #grad_o = out[6].register_hook(lambda grad:grad)
+        #print('before loss')
         #print(label[(label!=0)+(label!=1)-1])
-        loss = criterion(out[5],label)
+        loss = criterion(out[6],label)
         for i in range(6):
             #1*1*h*w saliency map
             loss += criterion(out[i],label)
         loss /= iter_size
+        #test2
         #print(loss.data[0])
         #print(loss)
         #print(iter_)
         loss.backward()
+        #print(out[6].grad)
+        #print('after loss')
         if iter_ % iter_size==0:
             #print(model.conv_fuse.weight.grad.mean())
             #print(model.conv1_1.weight.mean())
